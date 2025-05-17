@@ -429,53 +429,59 @@
             document.getElementById('loader').style.display = show ? 'block' : 'none';
         }
 
-        // Обработчик для кнопки "Анализ рынка и конкурентов"
-        document.getElementById('marketAnalysisBtn').addEventListener('click', function() {
-            // Вибрация при нажатии, если доступна
-            if (window.haptic) {
-                window.haptic.impactOccurred('medium');
-            }
-            
-            // Добавляем анимацию нажатия
-            this.classList.add('animate__animated', 'animate__pulse');
-            
-            // Показываем индикатор загрузки
-            showLoader(true);
-            
-            // Добавляем небольшую задержку перед отправкой данных для анимации
-            setTimeout(() => {
-                try {
-                    console.log("Отправка данных в бот: marketAnalysisBtn");
-                    
-                    // Отправляем данные в более надежном формате
-                    const data = JSON.stringify({
-                        action: "openGPT",
-                        tool: "marketAnalysisBtn"
-                    });
-                    
-                    // Отладочное сообщение
-                    if (!window.Telegram?.WebApp) {
-                        console.log("Отладка (вне Telegram):", data);
-                        showStatusMessage("Отладка: " + data, "success");
-                    }
-                    
-                    // Отправляем данные боту
-                    tg.sendData(data);
-                    
-                    // Скрываем индикатор загрузки
-                    showLoader(false);
-                    
-                    // Закрываем мини-приложение после отправки
-                    setTimeout(() => {
-                        tg.close();
-                    }, 500);
-                } catch (error) {
-                    console.error("Ошибка при отправке данных:", error);
-                    showLoader(false);
-                    showStatusMessage("Ошибка: " + error.message, "error");
-                }
-            }, 500);
+// Обработчик для кнопки "Анализ рынка и конкурентов"
+document.getElementById('marketAnalysisBtn').addEventListener('click', function() {
+    console.log("Кнопка 'Анализ рынка и конкурентов' нажата");
+    
+    // Вибрация при нажатии, если доступна
+    if (window.haptic) {
+        window.haptic.impactOccurred('medium');
+    }
+    
+    // Добавляем анимацию нажатия
+    this.classList.add('animate__animated', 'animate__pulse');
+    
+    // Показываем индикатор загрузки
+    showLoader(true);
+    
+    try {
+        // Простая строка без сложной структуры для отладки
+        const data = JSON.stringify({
+            action: "openGPT",
+            tool: "marketAnalysisBtn"
         });
+        
+        console.log("Подготовленные данные для отправки:", data);
+        
+        // Проверяем доступность Telegram API
+        if (window.Telegram && window.Telegram.WebApp) {
+            console.log("Telegram WebApp API доступен, отправляем данные");
+            window.Telegram.WebApp.sendData(data);
+            console.log("Данные успешно отправлены через Telegram WebApp API");
+        } else {
+            console.log("Используем резервный объект tg");
+            tg.sendData(data);
+            console.log("Данные отправлены через резервный объект");
+        }
+        
+        // Скрываем индикатор загрузки
+        showLoader(false);
+        
+        // Закрываем мини-приложение после отправки
+        setTimeout(() => {
+            if (window.Telegram && window.Telegram.WebApp) {
+                window.Telegram.WebApp.close();
+            } else {
+                tg.close();
+            }
+            console.log("Приложение закрыто");
+        }, 1000);
+    } catch (error) {
+        console.error("Ошибка при отправке данных:", error);
+        showLoader(false);
+        showStatusMessage("Ошибка: " + error.message, "error");
+    }
+});
 
         // Обработчик для кнопки "Обсудить идеи"
         document.getElementById('businessIdeaBtn').addEventListener('click', function() {

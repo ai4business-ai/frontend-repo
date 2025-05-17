@@ -290,6 +290,15 @@
             background-color: rgba(229, 57, 53, 0.1);
             color: #e53935;
         }
+        
+        /* Version info */
+        .version-info {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            font-size: 10px;
+            opacity: 0.5;
+        }
     </style>
 </head>
 <body>
@@ -339,6 +348,7 @@
 
         <div class="loader" id="loader"></div>
         <div class="status-message" id="statusMessage"></div>
+        <div class="version-info">v1.1.0</div>
     </div>
     
     <script>
@@ -353,18 +363,17 @@
             // Расширяем на весь экран
             tg.expand();
             
+            // Проверка версии Telegram WebApp API
+            if (tg.isVersionAtLeast && tg.isVersionAtLeast('6.0')) {
+                console.log("Версия Telegram WebApp API поддерживается");
+            } else {
+                console.warn("Версия Telegram WebApp API может быть устаревшей");
+            }
+            
             // Получаем тему Telegram и применяем соответствующие стили
             const isDarkTheme = tg.colorScheme === 'dark';
             if (isDarkTheme) {
                 document.body.classList.add('dark-theme');
-            }
-            
-            // Показываем кнопку "Ready" если она доступна в интерфейсе
-            if (tg.MainButton) {
-                tg.MainButton.setText('Готово');
-                tg.MainButton.onClick(function() {
-                    tg.close();
-                });
             }
             
             // Включаем хаптик-фидбэк при поддержке
@@ -372,11 +381,11 @@
                 // Сохраняем ссылку на HapticFeedback для использования в кнопках
                 window.haptic = tg.HapticFeedback;
             }
+            
+            // Сигнализируем Telegram, что Mini App готово к отображению
+            tg.ready();
         } else {
             console.log("Приложение запущено вне Telegram");
-            // Здесь можно добавить код для отладки вне Telegram
-            // Или показать сообщение, что приложение работает только в Telegram
-            
             // Создаем виртуальный объект tg для тестирования
             tg = {
                 sendData: function(data) {
@@ -390,7 +399,15 @@
                 openLink: function(url) {
                     console.log("Открытие ссылки:", url);
                     window.open(url, '_blank');
-                }
+                },
+                expand: function() {
+                    console.log("Приложение развернуто");
+                },
+                ready: function() {
+                    console.log("Приложение сигнализирует о готовности");
+                },
+                colorScheme: 'light',
+                isVersionAtLeast: function() { return true; }
             };
         }
 
@@ -412,7 +429,7 @@
             document.getElementById('loader').style.display = show ? 'block' : 'none';
         }
 
-        // Обработчики для кнопок
+        // Обработчик для кнопки "Анализ рынка и конкурентов"
         document.getElementById('marketAnalysisBtn').addEventListener('click', function() {
             // Вибрация при нажатии, если доступна
             if (window.haptic) {
@@ -425,23 +442,30 @@
             // Показываем индикатор загрузки
             showLoader(true);
             
-            // Отправляем команду боту
+            // Добавляем небольшую задержку перед отправкой данных для анимации
             setTimeout(() => {
                 try {
-                    tg.sendData(JSON.stringify({
+                    console.log("Отправка данных в бот: marketAnalysisBtn");
+                    
+                    // Отправляем данные в более надежном формате
+                    const data = JSON.stringify({
                         action: "openGPT",
                         tool: "marketAnalysisBtn"
-                    }));
+                    });
+                    
+                    // Отладочное сообщение
+                    if (!window.Telegram?.WebApp) {
+                        console.log("Отладка (вне Telegram):", data);
+                        showStatusMessage("Отладка: " + data, "success");
+                    }
+                    
+                    // Отправляем данные боту
+                    tg.sendData(data);
                     
                     // Скрываем индикатор загрузки
                     showLoader(false);
                     
-                    // Показываем сообщение об успехе (для отладки вне Telegram)
-                    if (!window.Telegram?.WebApp) {
-                        showStatusMessage("Запрос на анализ рынка отправлен", "success");
-                    }
-                    
-                    // Закрываем мини-приложение в Telegram
+                    // Закрываем мини-приложение после отправки
                     setTimeout(() => {
                         tg.close();
                     }, 500);
@@ -453,7 +477,7 @@
             }, 500);
         });
 
-        // Обработчики для остальных кнопок
+        // Обработчик для кнопки "Обсудить идеи"
         document.getElementById('businessIdeaBtn').addEventListener('click', function() {
             handleButtonClick(this, {
                 action: "businessIdea",
@@ -461,6 +485,7 @@
             });
         });
 
+        // Обработчик для кнопки "Составить бизнес-модель"
         document.getElementById('businessModelBtn').addEventListener('click', function() {
             handleButtonClick(this, {
                 action: "businessModel",
@@ -468,6 +493,7 @@
             });
         });
 
+        // Обработчик для кнопки "Применить идею из кейса"
         document.getElementById('casesBtn').addEventListener('click', function() {
             handleButtonClick(this, {
                 action: "cases",
@@ -488,20 +514,27 @@
             // Показываем индикатор загрузки
             showLoader(true);
             
-            // Отправляем команду боту
+            // Добавляем небольшую задержку для анимации
             setTimeout(() => {
                 try {
-                    tg.sendData(JSON.stringify(data));
+                    console.log("Отправка данных в бот:", data.action);
+                    
+                    // Отправляем данные в более надежном формате
+                    const jsonData = JSON.stringify(data);
+                    
+                    // Отладочное сообщение
+                    if (!window.Telegram?.WebApp) {
+                        console.log("Отладка (вне Telegram):", jsonData);
+                        showStatusMessage("Отладка: " + jsonData, "success");
+                    }
+                    
+                    // Отправляем данные боту
+                    tg.sendData(jsonData);
                     
                     // Скрываем индикатор загрузки
                     showLoader(false);
                     
-                    // Показываем сообщение об успехе (для отладки вне Telegram)
-                    if (!window.Telegram?.WebApp) {
-                        showStatusMessage("Запрос отправлен: " + data.action, "success");
-                    }
-                    
-                    // Закрываем мини-приложение в Telegram
+                    // Закрываем мини-приложение после отправки
                     setTimeout(() => {
                         tg.close();
                     }, 500);
